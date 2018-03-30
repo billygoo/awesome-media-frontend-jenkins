@@ -16,7 +16,14 @@ spec:
     spec:
       containers:
       - name: tf-test-dev
-        image: icp.ghama.io:8500/bong/awsome-media-frontend:latest
+        image: icp.ghama.io:8500/ns-admin1/awsome-media-frontend:latest
         ports:
         - containerPort: 8080
         imagePullPolicy: Always
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "50m"
+          limits: 
+            memory: "512Mi" 
+            cpu: "2" 

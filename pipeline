@@ -1,16 +1,16 @@
-GIT_URL=http://gogs-release-gogs/bckim0620/awesome-media-frontend-jenkins.git
-GIT_CREDENTIAL=GOGS_ADMIN
-GIT_WEB_VIEW_URL=http://gogs.ghama.io/bckim0620/awesome-media-frontend-jenkins
+GIT_URL=https://github.com/BongChan/awesome-media-frontend-jenkins.git
+GIT_CREDENTIAL=coramdeo0620@gmail.com
+GIT_WEB_VIEW_URL=https://github.com/BongChan/awesome-media-frontend-jenkins
 
 # Maven Local Repository 로 사용 할 pvc
-MAVEN_REPO_PVC=maven-repo-pvc-1
+MAVEN_REPO_PVC=jenkins-pvc
 
 DOCKER_IMAGE_NAME=awsome-media-frontend
 DOCKER_REGISTRY=icp.ghama.io:8500
-DOCKER_NAMESPACE=bong
-DOCKER_CREDENTIAL=DOCKER_CREDENTIAL
+DOCKER_NAMESPACE=ns-admin1
+DOCKER_CREDENTIAL=docker-registry
 
-K8S_NAMESPACE=bong
+K8S_NAMESPACE=ns-admin1
 DEPLOYMENT_NAME=awsome-media-frontend-deployment
 CONTAINER_NAME=tf-test-dev
 
@@ -25,7 +25,7 @@ podTemplate(label:label,
     ],
     volumes: [
         hostPathVolume(hostPath: '/var/run/docker.sock', mountPath: '/var/run/docker.sock'),
-        secretVolume(mountPath: '/var/run/secrets/kubernetes.io/serviceaccount', secretName: 'jenkins-release-jenkins-token-f5gfp'),
+        secretVolume(mountPath: '/var/run/secrets/kubernetes.io/serviceaccount', secretName: 'jenkins-token-dt72m'),
         persistentVolumeClaim(mountPath: '/root/.m2', claimName: MAVEN_REPO_PVC)
     ]) {
  
@@ -83,3 +83,10 @@ podTemplate(label:label,
         }
     }
 }
+
+
+kubectl config set-cluster icp.ghama.io --server=https://169.56.83.51:8001 --insecure-skip-tls-verify=true
+kubectl config set-context icp.ghama.io-context --cluster=icp.ghama.io
+kubectl config set-credentials admin --token=eyJhbGciOiJSUzI1NiJ9.eyJzdWIiOiJhZG1pbiIsImF0X2hhc2giOiJITUpyeGR2Y3N1ODFUZGg0YnoxSE1nIiwiaXNzIjoiaHR0cHM6Ly9pY3AuZ2hhbWEuaW86OTQ0My9vaWRjL2VuZHBvaW50L09QIiwiYXVkIjoiNDc4YTU4OGVjNjlmOWViNTllYzBiZDg0Njg2NTA4MTAiLCJleHAiOjE1MjI0MTg2MjcsImlhdCI6MTUyMjM3NTQyN30.elQepx1FL--idffTlKiJkQuluMnwMMtRwOh5MbGvJalB5FK8Pm7HiV12VEkm4rruJMxG9yrYUIF-ziRhtdTCp06shr6hMHQaLDAmyK3QB4yUq2CnyvWyVfaO0Os5H3TmmL_NxeO-8S5mYG7irUqggdPmIa1JIp6hbGVTOSSrxB4b-dtYUZ7mYBKgirgOsAn4oOU5xvf4qDb5V9cZRhoqcRU72x8thNJY4y1RMTN56__IA61L7bNyxpNntVUKs99EbTUnu8dZQ2QiQzQJlQgO_RPsD0vdDN0449hS28_5-Y30spUcYeaN9ieCRX_i2o7q4Vh7aOXXVnuSEZoate-oHg
+kubectl config set-context icp.ghama.io-context --user=admin --namespace=jenkins
+kubectl config use-context icp.ghama.io-context
