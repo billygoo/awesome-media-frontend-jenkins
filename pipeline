@@ -1,0 +1,85 @@
+GIT_URL=http://gogs-release-gogs/bckim0620/awesome-media-frontend-jenkins.git
+GIT_CREDENTIAL=GOGS_ADMIN
+GIT_WEB_VIEW_URL=http://gogs.ghama.io/bckim0620/awesome-media-frontend-jenkins
+
+# Maven Local Repository 로 사용 할 pvc
+MAVEN_REPO_PVC=maven-repo-pvc-1
+
+DOCKER_IMAGE_NAME=awsome-media-frontend
+DOCKER_REGISTRY=icp.ghama.io:8500
+DOCKER_NAMESPACE=bong
+DOCKER_CREDENTIAL=DOCKER_CREDENTIAL
+
+K8S_NAMESPACE=bong
+DEPLOYMENT_NAME=awsome-media-frontend-deployment
+CONTAINER_NAME=tf-test-dev
+
+def label = "jenkins-${UUID.randomUUID().toString()}"
+ 
+podTemplate(label:label,
+    // 빌드를 실행 할 Agent Pod 환경 구성
+    containers: [
+        containerTemplate(name: 'maven', image: 'maven:3.5.2-jdk-8-alpine', ttyEnabled: true, command: 'cat'),
+        containerTemplate(name: 'docker', image: 'docker', ttyEnabled: true, command: 'cat'),
+        containerTemplate(name: 'kubectl', image: 'lachlanevenson/k8s-kubectl', ttyEnabled: true, command: 'cat')
+    ],
+    volumes: [
+        hostPathVolume(hostPath: '/var/run/docker.sock', mountPath: '/var/run/docker.sock'),
+        secretVolume(mountPath: '/var/run/secrets/kubernetes.io/serviceaccount', secretName: 'jenkins-release-jenkins-token-f5gfp'),
+        persistentVolumeClaim(mountPath: '/root/.m2', claimName: MAVEN_REPO_PVC)
+    ]) {
+ 
+    node(label) {
+        def myRepo
+        // checkout step
+        // Git 에서 소스를 체크아웃 받는다.
+        stage('checkout') {
+            myRepo = checkout([
+                $class: 'GitSCM',
+                branches: [[name: '*/master']],
+                browser: [$class: 'GogsGit', repoUrl: GIT_WEB_VIEW_URL],
+                doGenerateSubmoduleConfigurations: false,
+                extensions: [],
+                submoduleCfg: [],
+                userRemoteConfigs: [[
+                    credentialsId: GIT_CREDENTIAL,
+                    url: GIT_URL
+                ]]
+            ])
+        }
+     
+        // Docker Image Tag 생성을 위해 Git Commit ID 추출
+        def gitCommit = myRepo.GIT_COMMIT
+        def shortGitCommit = "${gitCommit[0..10]}"
+ 
+        // Maven build
+        stage('build') {
+            container('maven') {
+                sh 'mvn clean package'
+            }
+        }
+     
+        def DOCKER_IMAGE_URL = '${DOCKER_REGISTRY}/${DOCKER_NAMESPACE}/${DOCKER_IMAGE_NAME}:' + shortGitCommit
+ 
+ 
+        // Docker Image Build & Push   
+        stage('Build Docker image') {
+            container('docker') {
+                withCredentials([usernamePassword(credentialsId: DOCKER_CREDENTIAL, passwordVariable: 'DOCKER_PASSWORD', usernameVariable: 'DOCKER_USER')]) {
+                    sh 'docker login ${DOCKER_REGISTRY} -u ' + DOCKER_USER + ' -p ' + DOCKER_PASSWORD
+                    sh 'docker build -t ' + DOCKER_IMAGE_URL + ' .'
+                    sh 'docker push ' + DOCKER_IMAGE_URL
+                }
+            }
+        }
+ 
+        // Kubernetes 배포   
+        stage('kubectl') {
+            container('kubectl') {
+                sh 'kubectl apply -n ${K8S_NAMESPACE} -f ./k8s'
+                sh 'kubectl set image deployments/${DEPLOYMENT_NAME} ${CONTAINER_NAME}=' + DOCKER_IMAGE_URL + ' -n ${K8S_NAMESPACE}'
+                sh 'kubectl rollout status deployments/${DEPLOYMENT_NAME} -n ${K8S_NAMESPACE}'
+            }
+        }
+    }
+}

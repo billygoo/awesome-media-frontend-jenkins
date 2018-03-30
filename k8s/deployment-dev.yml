@@ -1,0 +1,22 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: awsome-media-frontend-deployment
+  labels:
+    app: awsome-media-frontend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: awsome-media-frontend
+  template:
+    metadata:
+      labels:
+        app: awsome-media-frontend
+    spec:
+      containers:
+      - name: tf-test-dev
+        image: icp.ghama.io:8500/bong/awsome-media-frontend:latest
+        ports:
+        - containerPort: 8080
+        imagePullPolicy: Always
