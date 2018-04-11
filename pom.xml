@@ -61,7 +61,7 @@
 			</snapshots>
 			<id>central</id>
 			<name>Central Repository</name>
-			<url>https://repo.spring.io/release/</url>
+			<url>http://repo.spring.io/release/</url>
 		</repository>
 	</repositories>
 	<pluginRepositories>
@@ -74,7 +74,7 @@
 			</snapshots>
 			<id>central</id>
 			<name>Central Repository</name>
-			<url>https://repo.spring.io/release/</url>
+			<url>http://repo.spring.io/release/</url>
 		</pluginRepository>
 	</pluginRepositories> 
 	<build>
